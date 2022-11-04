@@ -1,15 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SessionMenu.h"
+#include "Menu.h"
 
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 
-void USessionMenu::Setup(int32 MaxConnections, FString MatchType)
+void UMenu::Setup(int32 NumberOfConnections, FString TypeOfMatch, FString Level)
 {
-	BMaxConnections = MaxConnections;
-	BMatchType = MatchType;
+	MaxConnections = NumberOfConnections;
+	MatchType = TypeOfMatch;
+	LevelPath = FString::Printf(TEXT("%s?listen"), *Level);
 
 	AddToViewport();
 	SetVisibility(ESlateVisibility::Visible);
@@ -46,7 +47,7 @@ void USessionMenu::Setup(int32 MaxConnections, FString MatchType)
 	}
 }
 
-bool USessionMenu::Initialize()
+bool UMenu::Initialize()
 {
 	if (!Super::Initialize()) return false;
 
@@ -63,7 +64,7 @@ bool USessionMenu::Initialize()
 	return true;
 }
 
-void USessionMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
+void UMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 {
 	RemoveFromViewport();
 	bIsFocusable = false;
@@ -83,36 +84,42 @@ void USessionMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
 }
 
-void USessionMenu::OnCreateSession(bool bWasSuccessful)
+void UMenu::OnCreateSession(bool bWasSuccessful)
 {
 	if (bWasSuccessful)
 	{
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			World->ServerTravel("/Game/ThirdPerson/Maps/Lobby?listen");
+			World->ServerTravel(FString::Printf(TEXT("%s?listen"), *LevelPath));
 		}
 	}
-	else UE_LOG(LogTemp, Error, TEXT("Failed to create session"));
+	else if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to create session"));
+		HostButton->SetIsEnabled(true);
+	}
 }
 
-void USessionMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
+void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful) 
 {
 	if (!MultiplayerSubsystem) return;
-	
+
 	for (auto& Result : SessionResults)
 	{
 		FString SettingsValue;
 		Result.Session.SessionSettings.Get(TEXT("MatchType"), SettingsValue);
-		if (SettingsValue == BMatchType)
+		if (SettingsValue == MatchType)
 		{
 			MultiplayerSubsystem->JoinSession(Result);
 			return;
 		}
 	}
+
+	JoinButton->SetIsEnabled(!bWasSuccessful);
 }
 
-void USessionMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
+void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result) 
 {
 	if (IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get())
 	{
@@ -130,28 +137,33 @@ void USessionMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 			}
 		}
 	}
+
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		JoinButton->SetIsEnabled(true);
+	}
 }
 
-void USessionMenu::OnDestroySession(bool bWasSuccessful)
+void UMenu::OnDestroySession(bool bWasSuccessful)
 {
 }
 
-void USessionMenu::OnStartSession(bool bWasSuccessful)
+void UMenu::OnStartSession(bool bWasSuccessful)
 {
 }
 
-void USessionMenu::HostServerButton()
-{
-	if (!MultiplayerSubsystem) return;
-
-	MultiplayerSubsystem->CreateSession(BMaxConnections, BMatchType);
-}
-
-void USessionMenu::JoinServerButton()
+void UMenu::HostServerButton() 
 {
 	if (!MultiplayerSubsystem) return;
+	HostButton->SetIsEnabled(false);
+
+	MultiplayerSubsystem->CreateSession(MaxConnections, MatchType);
+}
+
+void UMenu::JoinServerButton() 
+{
+	if (!MultiplayerSubsystem) return;
+	JoinButton->SetIsEnabled(false);
 
 	MultiplayerSubsystem->FindSessions(1000);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Join Server"));
 }

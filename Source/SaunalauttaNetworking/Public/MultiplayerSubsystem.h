@@ -69,4 +69,8 @@ private:
 	FDelegateHandle FindSessionsCompleteDelegateHandle;
 	FDelegateHandle JoinSessionCompleteDelegateHandle;
 	FDelegateHandle StartSessionCompleteDelegateHandle;
+
+	bool bCreateSessionOnDestroy = false;
+	int32 LastMaxConnections;
+	FString LastMatchType;
 };
