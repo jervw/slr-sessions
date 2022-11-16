@@ -18,6 +18,7 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FMultiplayerOnFindSessionsComplete,
                                      const TArray<FOnlineSessionSearchResult>& SessionResults, bool);
 DECLARE_MULTICAST_DELEGATE_OneParam(FMultiplayerOnJoinSessionComplete, EOnJoinSessionCompleteResult::Type Result);
 
+
 /**
  * Base class for the custom game instance subsystem
  */

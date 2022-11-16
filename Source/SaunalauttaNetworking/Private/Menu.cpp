@@ -5,6 +5,8 @@
 
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
+#include "SessionEntry.h"
+#include "Components/TextBlock.h"
 
 void UMenu::Setup(int32 NumberOfConnections, FString TypeOfMatch, FString Level)
 {
@@ -51,9 +53,15 @@ bool UMenu::Initialize()
 {
 	if (!Super::Initialize()) return false;
 
+	// Bind the buttons to their respective functions
 	if (HostButton)
 	{
 		HostButton->OnClicked.AddDynamic(this, &ThisClass::HostServerButton);
+	}
+
+	if (RefreshButton)
+	{
+		RefreshButton->OnClicked.AddDynamic(this, &ThisClass::RefreshServerButton);
 	}
 
 	if (JoinButton)
@@ -101,9 +109,38 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 	}
 }
 
-void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful) 
+/*
+void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
 	if (!MultiplayerSubsystem) return;
+
+	// Clear the list of sessions
+	SessionList->ClearChildren();
+
+	for (auto& Result : SessionResults)
+	{
+		FString SettingsValue;
+		Result.Session.SessionSettings.Get(TEXT("MatchType"), SettingsValue);
+		if (SettingsValue == MatchType)
+		{
+			USessionEntry* SessionEntry = CreateWidget<USessionEntry>(this, SessionEntryClass);
+			if (SessionEntry)
+			{
+				// setup the session result in setup
+				SessionEntry->Setup(Result);
+				SessionList->AddChildToVerticalBox(SessionEntry);
+			}
+		}
+	}
+}
+*/
+
+void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
+{
+	if (!MultiplayerSubsystem) return;
+
+	// print number of sessions found
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Found %d sessions"), SessionResults.Num()));
 
 	for (auto& Result : SessionResults)
 	{
@@ -119,7 +156,7 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 	JoinButton->SetIsEnabled(!bWasSuccessful);
 }
 
-void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result) 
+void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
 	if (IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get())
 	{
@@ -140,7 +177,7 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
-		JoinButton->SetIsEnabled(true);
+		RefreshButton->SetIsEnabled(true);
 	}
 }
 
@@ -152,7 +189,7 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 {
 }
 
-void UMenu::HostServerButton() 
+void UMenu::HostServerButton()
 {
 	if (!MultiplayerSubsystem) return;
 	HostButton->SetIsEnabled(false);
@@ -160,10 +197,17 @@ void UMenu::HostServerButton()
 	MultiplayerSubsystem->CreateSession(MaxConnections, MatchType);
 }
 
-void UMenu::JoinServerButton() 
+void UMenu::RefreshServerButton()
 {
 	if (!MultiplayerSubsystem) return;
-	JoinButton->SetIsEnabled(false);
 
 	MultiplayerSubsystem->FindSessions(1000);
+}
+
+void UMenu::JoinServerButton()
+{
+	if (!MultiplayerSubsystem) return;
+
+	MultiplayerSubsystem->FindSessions(1000);
+	
 }
