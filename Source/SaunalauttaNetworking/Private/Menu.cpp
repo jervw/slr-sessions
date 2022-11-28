@@ -109,7 +109,6 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 	}
 }
 
-/*
 void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
 	if (!MultiplayerSubsystem) return;
@@ -132,29 +131,9 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 			}
 		}
 	}
-}
-*/
-
-void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
-{
-	if (!MultiplayerSubsystem) return;
-
-	// print number of sessions found
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Found %d sessions"), SessionResults.Num()));
-
-	for (auto& Result : SessionResults)
-	{
-		FString SettingsValue;
-		Result.Session.SessionSettings.Get(TEXT("MatchType"), SettingsValue);
-		if (SettingsValue == MatchType)
-		{
-			MultiplayerSubsystem->JoinSession(Result);
-			return;
-		}
-	}
-
 	JoinButton->SetIsEnabled(!bWasSuccessful);
 }
+
 
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
@@ -197,6 +176,7 @@ void UMenu::HostServerButton()
 	MultiplayerSubsystem->CreateSession(MaxConnections, MatchType);
 }
 
+
 void UMenu::RefreshServerButton()
 {
 	if (!MultiplayerSubsystem) return;
@@ -209,5 +189,9 @@ void UMenu::JoinServerButton()
 	if (!MultiplayerSubsystem) return;
 
 	MultiplayerSubsystem->FindSessions(1000);
-	
+}
+
+void UMenu::DebugFunction()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Debug Function"));
 }

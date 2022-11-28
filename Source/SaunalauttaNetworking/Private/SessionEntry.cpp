@@ -8,7 +8,7 @@
 #include "OnlineSessionSettings.h"
 
 
-void USessionEntry::Setup(FOnlineSessionSearchResult Result)
+void USessionEntry::Setup(const FOnlineSessionSearchResult& Result)
 {
 	Current = &Result;
 	
@@ -29,34 +29,24 @@ void USessionEntry::Setup(FOnlineSessionSearchResult Result)
 	PlayersText->Text = Players;
 	HostText->Text = HostName;
 
+	if (JoinButton)
+	{
+		JoinButton->OnClicked.AddDynamic(this, &ThisClass::JoinSessionButton);
+	}
 	
 }
 
-void USessionEntry::JoinSession()
+void USessionEntry::JoinSessionButton()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Joining Session"));
 	UGameInstance* GameInstance = GetGameInstance();
 	if (GameInstance)
 	{
-		GEngine->AddOnScreenDebugMessage(-2, 5.f, FColor::Red, TEXT("GameInstance"));
-		
 		auto* MultiplayerSubsystem = GameInstance->GetSubsystem<UMultiplayerSubsystem>();
 		if (MultiplayerSubsystem && Current)
 		{
-			GEngine->AddOnScreenDebugMessage(-3, 5.f, FColor::Red, TEXT("Subsystem"));
 			MultiplayerSubsystem->JoinSession(*Current);
 		}
 	}
 }
 
-bool USessionEntry::Initialize()
-{
-	if (!Super::Initialize()) return false;
-
-	if (JoinButton)
-	{
-		JoinButton->OnClicked.AddDynamic(this, &ThisClass::JoinSession);
-	}
-
-	return true;
-}

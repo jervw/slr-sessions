@@ -82,6 +82,9 @@ private:
 
 	UFUNCTION()
 	void JoinServerButton();
+
+	UFUNCTION()
+	void DebugFunction();
 	
 
 

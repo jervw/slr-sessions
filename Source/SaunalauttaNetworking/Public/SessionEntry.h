@@ -18,17 +18,19 @@ private:
 
 
 public:
-	void Setup(FOnlineSessionSearchResult Result);
-
+	void Setup(const FOnlineSessionSearchResult& Result);
+	
+	UPROPERTY(meta=(BindWidget))
+	class UButton* JoinButton;
 private:
-	void JoinSession();
+	UFUNCTION()
+	void JoinSessionButton();
 
 	// Store the session search result
-	FOnlineSessionSearchResult* Current;
+	const FOnlineSessionSearchResult* Current;
 
 
 protected:
-	virtual bool Initialize() override;
 	UPROPERTY(meta=(BindWidget))
 	class UTextBlock* SessionText;
 
@@ -38,6 +40,4 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	class UTextBlock* HostText;
 
-	UPROPERTY(meta=(BindWidget))
-	class UButton* JoinButton;
 };
